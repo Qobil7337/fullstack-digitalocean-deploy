@@ -212,6 +212,50 @@ echo "0 0 * * * /usr/bin/certbot renew --quiet" >> /etc/crontab
 
 ## 📦 Infrastructure Setup For App
 
+## 🌐 DNS Configuration for Angular Frontend Deployment
+
+To serve your Angular frontend using a custom domain like `https://yourdomain.com`, follow these steps to set up DNS records on DigitalOcean.
+
+---
+
+## 🛠 Prerequisites
+
+- Your domain is already **pointed to DigitalOcean** via nameservers from GoDaddy or another registrar.
+- You have a **frontend droplet** ready and know its public IP.
+
+---
+
+## 📌 Steps to Add DNS Records
+
+1. **Go to DigitalOcean Control Panel**
+  - Navigate to `Networking` → `Domains`
+  - Select your domain: `yourdomain.com`
+
+2. **Add A Records**
+
+| Type | Hostname | Value (Droplet IP) | Description                         |
+|------|----------|---------------------|-------------------------------------|
+| A    | `@`      | `123.123.123.123`   | Root domain → your frontend droplet |
+| A    | `www`    | `123.123.123.123`   | www subdomain → same droplet        |
+
+> Replace `123.123.123.123` with your actual droplet IP address.
+
+---
+
+## ✅ Verify DNS
+
+You can check if DNS propagation is complete:
+
+```bash
+ping yourdomain.com
+ping www.yourdomain.com
+```
+
+Or use an online DNS checker like [https://dnschecker.org](https://dnschecker.org)
+
+Once your domain resolves to the correct IP, you're ready to move on.
+
+
 ### 1. Initial Setup
 ```bash
 apt update && apt upgrade -y
