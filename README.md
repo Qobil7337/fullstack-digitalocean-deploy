@@ -209,6 +209,9 @@ echo "0 0 * * * /usr/bin/certbot renew --quiet" >> /etc/crontab
 - `https://api.yourdomain.com`
 - `https://adminer.yourdomain.com`
 
+---
+
+
 
 ## 📦 Infrastructure Setup For App
 
