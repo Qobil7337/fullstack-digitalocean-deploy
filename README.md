@@ -103,14 +103,11 @@ apt install php8.3-mysql
 systemctl enable php8.3-fpm
 systemctl start php8.3-fpm
 ```
-
-Disable Apache if installed:
+After php installation you can see that apache is also installed and serving your droplet, you can check it using 
 ```bash
-systemctl stop apache2
-systemctl disable apache2
+apache2 -v
 ```
 
-Or remove it
 # Remove Apache and prevent it from reinstalling
 ```bash
 sudo systemctl stop apache2
