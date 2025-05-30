@@ -1,84 +1,61 @@
 
-# Project stack: Angular (frontend), NestJS (backend), MySQL (DigitalOcean managed), Nginx, Adminer, domain, SSL
+# 🌐 Full Stack Deployment Guide: Angular + NestJS + MySQL (DigitalOcean)
 
-## First create two droplets and one managed database
-
-## Then connect godaddy domain to digital ocean
-
-### Step 1: Go to networking tab in digital ocean
-- Click "Create" under Domains.
-- Enter your domain name (e.g., yourdomain.com) and click "Add Domain".
-- Copy the nameservers from DigitalOcean
-- Once added, you’ll see something like:
-  ```
-  ns1.digitalocean.com  
-  ns2.digitalocean.com  
-  ns3.digitalocean.com  
-  ```
-- Go to GoDaddy DNS settings
-- Go to “My Products” → click on your domain.
-- Click “Manage DNS”.
-- Scroll down to “Nameservers”.
-- Click Change, then Enter my own nameservers.
-- Paste the 3 DigitalOcean nameservers.
-- Save and wait up to 30 minutes (DNS propagation time).
+## ✅ Stack
+- Frontend: Angular
+- Backend: NestJS
+- Database: DigitalOcean Managed MySQL
+- Web Server: Nginx
+- Domain: GoDaddy (pointed to DigitalOcean)
+- Admin Panel: Adminer (via subdomain)
+- SSL: Let's Encrypt (Certbot)
+- PM2: Node app process manager
 
 ---
 
-### part 2: SET UP SUBDOMAINS IN DIGITALOCEAN DNS
-In the domain's DNS section in DigitalOcean:  
-Create two A records:
+## 📦 Infrastructure Setup
+
+### 1. Create Resources on DigitalOcean
+- 2 Droplets (1 for API/Adminer, 1 for Frontend)
+- 1 Managed MySQL Database
+
+### 2. Connect GoDaddy Domain to DigitalOcean
+1. In DigitalOcean → Networking → Domains → Add your domain (e.g., `saidoon.com`)
+2. Copy nameservers:
+    ```
+    ns1.digitalocean.com
+    ns2.digitalocean.com
+    ns3.digitalocean.com
+    ```
+3. In GoDaddy → My Products → DNS Settings → Change Nameservers → Enter custom → Paste DO nameservers
+4. Wait ~30 mins for DNS propagation
+
+### 3. Create Subdomain A Records in DigitalOcean
 - Type: A
-- Name: api       →  your droplet IP
-- Name: adminer   →  your droplet IP
-
-You can now use:
-- `api.yourdomain.com` → NestJS API
-- `adminer.yourdomain.com` → Adminer
+- Name: `api` → points to droplet IP
+- Name: `adminer` → points to droplet IP
 
 ---
 
-## Step 1: Initial Setup on Droplet
+## 🚀 Droplet Setup
 
+### 1. Initial Setup
 ```bash
 apt update && apt upgrade -y
 apt install curl wget git ufw unzip -y
 ```
 
----
-
-## Step 2: Install Node.js, PM2, Nginx
-
-Install Node.js:
-
+### 2. Install Node.js, PM2, Nginx
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 apt install -y nodejs
-```
-
-Install PM2 (to run NestJS in background):
-
-```bash
 npm install -g pm2
-```
-
-Install Nginx:
-
-```bash
 apt install nginx -y
-```
-
-Enable Nginx:
-
-```bash
 systemctl enable nginx
 systemctl start nginx
 ```
 
----
-
-## Step 3: Set Up UFW Firewall
-
+### 3. Configure UFW Firewall
 ```bash
 ufw allow OpenSSH
 ufw allow 'Nginx Full'
@@ -87,7 +64,7 @@ ufw enable
 
 ---
 
-## Step 4: Clone & Start NestJS App
+## ⚙️ Deploy NestJS API
 
 ```bash
 cd /var/www
@@ -96,26 +73,21 @@ cd api
 npm install
 ```
 
-Configure `.env` and other environment-specific files.  
-Build the api:
+- Set up `.env` file
+- Build and run:
 
 ```bash
 npm run build
-```
-
-Start the app with PM2:
-
-```bash
 pm2 start dist/main.js --name nest-api
 pm2 save
 pm2 startup
 ```
 
-Make sure your app listens on `localhost:3000` or change if needed.
+Make sure your app listens on `localhost:3000`.
 
 ---
 
-## Step 5: Install Adminer
+## 🛠️ Setup Adminer
 
 ```bash
 mkdir -p /var/www/adminer
@@ -123,17 +95,33 @@ cd /var/www/adminer
 wget https://github.com/vrana/adminer/releases/download/v4.8.1/adminer-4.8.1.php -O index.php
 ```
 
----
-
-## Step 6: Configure Nginx Server Blocks
-
-### 6.1 Create config for api.saidoon.com
+### Install PHP & Extensions
 
 ```bash
-nano /etc/nginx/sites-available/api.saidoon.com
+apt install php php-fpm -y
+apt install php8.3-mysql
+systemctl enable php8.3-fpm
+systemctl start php8.3-fpm
 ```
 
-Paste:
+Disable Apache if installed:
+```bash
+systemctl stop apache2
+systemctl disable apache2
+```
+
+Or remove it
+# Remove Apache and prevent it from reinstalling
+sudo systemctl stop apache2
+sudo systemctl disable apache2
+sudo apt remove apache2 -y
+sudo apt-mark hold apache2
+
+---
+
+## 🌐 Configure Nginx
+
+### `api.saidoon.com`
 
 ```nginx
 server {
@@ -151,13 +139,7 @@ server {
 }
 ```
 
-### 6.2 Create config for adminer.saidoon.com
-
-```bash
-nano /etc/nginx/sites-available/adminer.saidoon.com
-```
-
-Paste:
+### `adminer.saidoon.com`
 
 ```nginx
 server {
@@ -169,7 +151,7 @@ server {
 
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;  # Adjust PHP version if needed
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
     }
 
     location / {
@@ -178,65 +160,18 @@ server {
 }
 ```
 
----
-
-## Step 7: Enable Sites
+Enable both sites:
 
 ```bash
 ln -s /etc/nginx/sites-available/api.saidoon.com /etc/nginx/sites-enabled/
 ln -s /etc/nginx/sites-available/adminer.saidoon.com /etc/nginx/sites-enabled/
-```
-
-Test Nginx config:
-
-```bash
 nginx -t
-```
-
-Reload:
-
-```bash
 systemctl reload nginx
 ```
 
-If you're using Nginx as your main web server (which is common), you do not need Apache. To disable Apache:
-
-```bash
-sudo systemctl stop apache2
-sudo systemctl disable apache2
-```
-
 ---
 
-## Step 8: Install PHP for Adminer
-
-```bash
-apt install php php-fpm -y
-```
-
-Install the MySQL extension for PHP 8.3:
-
-```bash
-sudo apt install php8.3-mysql
-```
-
-Make sure PHP-FPM is running:
-
-```bash
-sudo systemctl enable php8.3-fpm
-sudo systemctl start php8.3-fpm
-```
-
-And enable it to run on boot:
-
-```bash
-sudo systemctl enable php8.3-fpm
-systemctl status php8.3-fpm
-```
-
----
-
-## Step 9: Add SSL with Let's Encrypt
+## 🔒 Add SSL with Let's Encrypt
 
 Install Certbot:
 
@@ -244,14 +179,20 @@ Install Certbot:
 apt install certbot python3-certbot-nginx -y
 ```
 
-Run for both domains:
+Get certificates:
 
 ```bash
 certbot --nginx -d api.saidoon.com -d adminer.saidoon.com
 ```
 
-Auto-renew:
+Auto-renewal:
 
 ```bash
 echo "0 0 * * * /usr/bin/certbot renew --quiet" >> /etc/crontab
 ```
+
+---
+
+✅ Done! Your NestJS backend and Adminer should be securely available at:
+- `https://api.saidoon.com`
+- `https://adminer.saidoon.com`
