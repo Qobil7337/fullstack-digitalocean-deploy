@@ -112,10 +112,12 @@ systemctl disable apache2
 
 Or remove it
 # Remove Apache and prevent it from reinstalling
+```bash
 sudo systemctl stop apache2
 sudo systemctl disable apache2
 sudo apt remove apache2 -y
 sudo apt-mark hold apache2
+```
 
 ---
 
