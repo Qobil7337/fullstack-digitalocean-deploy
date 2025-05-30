@@ -13,7 +13,7 @@
 
 ---
 
-## 📦 Infrastructure Setup
+## 📦 Infrastructure Setup For Api and Adminer
 
 ### 1. Create Resources on DigitalOcean
 - 2 Droplets (1 for API/Adminer, 1 for Frontend)
@@ -208,3 +208,103 @@ echo "0 0 * * * /usr/bin/certbot renew --quiet" >> /etc/crontab
 ✅ Done! Your NestJS backend and Adminer should be securely available at:
 - `https://api.yourdomain.com`
 - `https://adminer.yourdomain.com`
+
+
+## 📦 Infrastructure Setup For App
+
+### 1. Initial Setup
+```bash
+apt update && apt upgrade -y
+apt install curl wget git ufw unzip -y
+```
+
+### 2. Install Node.js & Angular CLI
+```bash
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+apt install -y nodejs
+npm install -g @angular/cli
+```
+
+### 3. Install Nginx
+```bash
+apt install nginx -y
+systemctl enable nginx
+systemctl start nginx
+```
+
+### 4. Configure UFW Firewall
+```bash
+ufw allow OpenSSH
+ufw allow 'Nginx Full'
+ufw enable
+```
+
+### 5. Clone Your Angular Project
+```bash
+cd /var/www
+git clone https://github.com/yourusername/your-angular-repo.git angular-app
+cd angular-app
+npm install
+```
+
+### 6. Build Angular App
+```bash
+ng build
+```
+
+### 7. Configure Nginx to Serve Angular
+Create config file:
+```bash
+nano /etc/nginx/sites-available/yourdomain.com
+```
+
+Paste:
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com www.yourdomain.com;
+
+    root /var/www/angular-app/dist/your-app-name;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+Enable config and reload:
+```bash
+ln -s /etc/nginx/sites-available/yourdomain.com /etc/nginx/sites-enabled/
+nginx -t
+systemctl reload nginx
+```
+
+## 🔒 Add SSL with Let's Encrypt
+
+Install Certbot:
+
+```bash
+apt install certbot python3-certbot-nginx -y
+```
+
+Get certificates:
+
+```bash
+certbot --nginx -d yourdomain.com -d www.yourdomain.com
+```
+
+Auto-renewal:
+
+```bash
+echo "0 0 * * * /usr/bin/certbot renew --quiet" >> /etc/crontab
+```
+
+✅ Done!
+Your Angular app is now live and secure at:
+
+🌍 https://yourdomain.com
+
+
+
+CI CD...
