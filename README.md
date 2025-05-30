@@ -112,8 +112,9 @@ apache2 -v
 ```bash
 sudo systemctl stop apache2
 sudo systemctl disable apache2
-sudo apt remove apache2 -y
-sudo apt-mark hold apache2
+sudo apt remove apache2*
+sudo apt purge apache2*
+sudo apt autoremove
 ```
 
 ---
