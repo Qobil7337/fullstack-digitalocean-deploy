@@ -121,7 +121,13 @@ sudo apt autoremove
 
 ## 🌐 Configure Nginx
 
-### `api.saidoon.com`
+### Create config for api.saidoon.com
+
+```bash
+nano /etc/nginx/sites-available/api.saidoon.com
+```
+
+Paste:
 
 ```nginx
 server {
@@ -140,6 +146,12 @@ server {
 ```
 
 ### `adminer.saidoon.com`
+
+```bash
+nano /etc/nginx/sites-available/adminer.saidoon.com
+```
+
+Paste:
 
 ```nginx
 server {
