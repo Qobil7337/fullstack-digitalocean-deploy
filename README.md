@@ -20,7 +20,7 @@
 - 1 Managed MySQL Database
 
 ### 2. Connect GoDaddy Domain to DigitalOcean
-1. In DigitalOcean → Networking → Domains → Add your domain (e.g., `saidoon.com`)
+1. In DigitalOcean → Networking → Domains → Add your domain (e.g., `yourdomain.com`)
 2. Copy nameservers:
     ```
     ns1.digitalocean.com
@@ -121,10 +121,10 @@ sudo apt autoremove
 
 ## 🌐 Configure Nginx
 
-### Create config for api.saidoon.com
+### Create config for api.yourdomain.com
 
 ```bash
-nano /etc/nginx/sites-available/api.saidoon.com
+nano /etc/nginx/sites-available/api.yourdomain.com
 ```
 
 Paste:
@@ -132,7 +132,7 @@ Paste:
 ```nginx
 server {
     listen 80;
-    server_name api.saidoon.com;
+    server_name api.yourdomain.com;
 
     location / {
         proxy_pass http://localhost:3000;
@@ -145,10 +145,10 @@ server {
 }
 ```
 
-### `adminer.saidoon.com`
+### `adminer.yourdomain.com`
 
 ```bash
-nano /etc/nginx/sites-available/adminer.saidoon.com
+nano /etc/nginx/sites-available/adminer.yourdomain.com
 ```
 
 Paste:
@@ -156,7 +156,7 @@ Paste:
 ```nginx
 server {
     listen 80;
-    server_name adminer.saidoon.com;
+    server_name adminer.yourdomain.com;
 
     root /var/www/adminer;
     index index.php;
@@ -175,8 +175,8 @@ server {
 Enable both sites:
 
 ```bash
-ln -s /etc/nginx/sites-available/api.saidoon.com /etc/nginx/sites-enabled/
-ln -s /etc/nginx/sites-available/adminer.saidoon.com /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/api.yourdomain.com /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/adminer.yourdomain.com /etc/nginx/sites-enabled/
 nginx -t
 systemctl reload nginx
 ```
@@ -194,7 +194,7 @@ apt install certbot python3-certbot-nginx -y
 Get certificates:
 
 ```bash
-certbot --nginx -d api.saidoon.com -d adminer.saidoon.com
+certbot --nginx -d api.yourdomain.com -d adminer.yourdomain.com
 ```
 
 Auto-renewal:
@@ -206,5 +206,5 @@ echo "0 0 * * * /usr/bin/certbot renew --quiet" >> /etc/crontab
 ---
 
 ✅ Done! Your NestJS backend and Adminer should be securely available at:
-- `https://api.saidoon.com`
-- `https://adminer.saidoon.com`
+- `https://api.yourdomain.com`
+- `https://adminer.yourdomain.com`
