@@ -73,8 +73,41 @@ cd api
 npm install
 ```
 
-- Set up `.env` file
-- Build and run:
+### 📄 Set up `.env` file
+
+Create a `.env` file in the root of your project:
+
+```bash
+nano .env
+```
+
+Paste the following content:
+
+```env
+# Server
+PORT=3000
+
+# Database
+DB_HOST=localhost
+DB_PORT=3306
+DB_USERNAME=root
+DB_PASSWORD=your_password
+DB_NAME=your_database
+
+# JWT
+JWT_SECRET=your_jwt_secret_key
+JWT_EXPIRES_IN=3600s
+
+# Other
+NODE_ENV=production
+API_PREFIX=api
+```
+
+Save and exit (`CTRL + O`, `ENTER`, then `CTRL + X`).
+
+---
+
+### 🛠️ Build and run the app
 
 ```bash
 npm run build
