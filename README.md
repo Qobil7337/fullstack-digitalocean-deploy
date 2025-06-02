@@ -583,3 +583,175 @@ Now whenever you `git push` to `master`, GitHub Actions will:
 3. Install dependencies
 4. Build the project
 5. Restart `pm2`
+
+# 🚀 Full CI/CD Setup Guide for Angular App Deployment via GitHub Actions (NGINX)
+
+This assumes:
+
+- Your droplet already serves your Angular app using **NGINX**
+- Repo is cloned at `/var/www/enigma-app`
+- GitHub branch is `master`
+- You can SSH into your droplet
+- Your Angular app builds with `ng build` and outputs to `dist/`
+
+---
+
+## ✅ STEP 1: Generate SSH Key on LOCAL for GitHub Actions
+
+```powershell
+ssh-keygen -t ed25519 -C "github-deploy@enigma_app" -f "$env:USERPROFILE\.ssh\enigma_app_deploy_key"
+```
+
+Show public key:
+
+```powershell
+type $env:USERPROFILE\.ssh\enigma_app_deploy_key.pub
+```
+
+---
+
+## ✅ STEP 2: Add Public Key to Server
+
+SSH into your droplet:
+
+```bash
+ssh root@YOUR_APP_SERVER_IP
+```
+
+Add the key to `~/.ssh/authorized_keys`:
+
+```bash
+nano ~/.ssh/authorized_keys
+```
+
+Paste the public key, save, and exit.
+
+Now test SSH from local:
+
+```powershell
+ssh -i "$env:USERPROFILE\.ssh\enigma_app_deploy_key" root@YOUR_APP_SERVER_IP
+```
+
+---
+
+## ✅ STEP 3: Add Private Key to GitHub Secrets
+
+Show the private key:
+
+```powershell
+Get-Content $env:USERPROFILE\.ssh\enigma_app_deploy_key
+```
+
+Go to **GitHub → Repo → Settings → Secrets → Actions → New repository secret**:
+
+- `ANGULAR_DEPLOY_KEY`: private key content
+- `APP_SERVER_IP`: your droplet IP
+
+---
+
+## ✅ STEP 4: Set Up Server for GitHub Pulls
+
+On the server:
+
+### 1. Generate deploy key for GitHub access:
+
+```bash
+ssh-keygen -t ed25519 -C "deploy-key@enigma-app" -f ~/.ssh/github_deploy_key
+```
+
+### 2. Add public key to GitHub → Repo → Settings → Deploy Keys → Add Key
+
+```bash
+cat ~/.ssh/github_deploy_key.pub
+```
+
+✅ Check “Allow write access”
+
+### 3. Set SSH remote:
+
+```bash
+cd /var/www/enigma-app
+git remote set-url origin git@github.com:Qobil7337/enigma-app.git
+```
+
+### 4. Add SSH config:
+
+```bash
+nano ~/.ssh/config
+```
+
+Add:
+
+```
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/github_deploy_key
+```
+
+### 5. Test SSH & pull:
+
+```bash
+ssh -T git@github.com
+cd /var/www/enigma-app
+git pull origin master
+```
+
+---
+
+## ✅ STEP 5: GitHub Actions Workflow
+
+Create `.github/workflows/deploy.yml` in your GitHub repo:
+
+```yaml
+name: Deploy Angular App to Droplet
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ANGULAR_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.APP_SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        run: |
+          ssh -i ~/.ssh/id_ed25519 root@${{ secrets.APP_SERVER_IP }} << 'EOF'
+            cd /var/www/enigma-app
+            git pull origin master
+           
+           cd Edupath_Angular
+            npm install
+            npm run build
+            systemctl reload nginx
+          EOF
+```
+
+📝 Make sure:
+- Angular `outputPath` in `angular.json` points to `dist/enigma-app` (or adjust the `cp` path accordingly)
+- NGINX is configured to serve from `/var/www/html/enigma-app`
+
+---
+
+## ✅ DONE!
+
+Now, every time you push to `master`, GitHub Actions will:
+
+1. SSH into your droplet
+2. Pull the latest code
+3. Install dependencies
+4. Build Angular project
+5. Copy it to NGINX public directory
+6. Reload NGINX
