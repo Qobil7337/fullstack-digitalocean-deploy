@@ -359,6 +359,17 @@ ln -s /etc/nginx/sites-available/yourdomain.com /etc/nginx/sites-enabled/
 nginx -t
 systemctl reload nginx
 ```
+Check that you dont have default configuration in sites-available that also tries to control yourdoman using:
+
+```bash
+grep -r "server_name yourdomain.com" /etc/nginx/sites-available/
+```
+
+If so, remove it using:
+
+```bash
+sudo rm /etc/nginx/sites-enabled/default
+```
 
 ## 🔒 Add SSL with Let's Encrypt
 
